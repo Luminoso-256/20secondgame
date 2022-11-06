@@ -1,6 +1,7 @@
 package game
 
 import (
+	"fmt"
 	"image/color"
 	"math/rand"
 
@@ -13,6 +14,10 @@ const (
 	Z = 20
 )
 
+type Street struct {
+	sx, sy, ex, ey int
+}
+
 func GenerateLevel() (*ebiten.Image, []*ebiten.Image) {
 	var debug []*ebiten.Image
 	for i := 0; i < Z; i++ {
@@ -21,45 +26,29 @@ func GenerateLevel() (*ebiten.Image, []*ebiten.Image) {
 	}
 	img := ebiten.NewImage(N, N)
 	img.Fill(color.White)
-	x := rand.Intn(N + 1)
-	y := rand.Intn(N + 1)
-	for z := 0; z < Z; z++ {
 
-		dir := rand.Intn(4)
-		dist := rand.Intn(12) + 4
+	rX := 8
+	rY := 8
 
-		nx := x
-		ny := y
+	var avenues []Street
+	numAvenues := rand.Intn(3) + 5
+	numAvFromRoot := rand.Intn(numAvenues) + 1
+	fmt.Printf("total aves: %v | from root: %v\n", numAvenues, numAvFromRoot)
+	for i := 0; i < numAvFromRoot; i++ {
+		avenues = append(avenues, Street{
+			rX, rY, rand.Intn(N + 1), rY + rand.Intn(N+1),
+		})
+	}
+	// for i := 0; i < (numAvenues - numAvFromRoot); i++ {
+	// 	toIntersect := avenues[rand.Intn(len(avenues))]
+	// 	avenues = append(avenues, Street{
+	// 		toIntersect.sy, -1 * toIntersect.sx,
+	// 		toIntersect.sy, -1 * toIntersect.ex,
+	// 	})
+	// }
 
-		switch dir {
-		case 0:
-			//UP
-			ny -= dist
-		case 1:
-			//DOWN
-			ny += dist
-		case 2:
-			//LEFT
-			nx -= dist
-		case 3:
-			//RIGHT
-			nx += dist
-		}
-		//bounds, with a small amount of bounceback
-		if nx > 16 {
-			nx = 15
-		}
-		if ny > 16 {
-			ny = 15
-		}
-		if nx < 0 {
-			nx = 1
-		}
-		if ny < 0 {
-			ny = 0
-		}
-		ebitenutil.DrawLine(debug[z], float64(x), float64(y), float64(nx), float64(ny), color.Black)
-		ebitenutil.DrawLine(img, float64(x), float64(y), float64(nx), float64(ny), color.Black)
+	for _, street := range avenues {
+		ebitenutil.DrawLine(img, float64(street.sx), float64(street.sy), float64(street.ex), float64(street.ey), color.Black)
 	}
 
 	return img, debug
