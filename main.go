@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"image/color"
 	_ "image/png"
 	"log"
@@ -25,6 +24,9 @@ var (
 	aimGood  *ebiten.Image
 	aimMeh   *ebiten.Image
 	aimBad   *ebiten.Image
+
+	levelPrototype *ebiten.Image
+	levelProtoDbg  []*ebiten.Image
 )
 
 func init() {
@@ -32,6 +34,8 @@ func init() {
 	aimBad, _, _ = ebitenutil.NewImageFromFile("assets/images/ui/aimmarker_sm1.png")
 	aimMeh, _, _ = ebitenutil.NewImageFromFile("assets/images/ui/aimmarker_sm3.png")
 	aimGood, _, _ = ebitenutil.NewImageFromFile("assets/images/ui/aimmarker_sm2.png")
+
+	levelPrototype, levelProtoDbg = game.GenerateLevel()
 }
 
 type Game struct {
@@ -70,6 +74,10 @@ func (g *Game) Update() error {
 		g.balls = g.balls[30:]
 	}
 
+	if ebiten.IsKeyPressed(ebiten.Key0) {
+		levelPrototype, levelProtoDbg = game.GenerateLevel()
+	}
+
 	return nil
 }
 
@@ -93,7 +101,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Scale(radius, radius)
 	op.GeoM.Translate(float64(mx)-8*radius, float64(my)-8*radius)
-	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("%v ", radius), mx, my)
+	//ebitenutil.DebugPrintAt(screen, fmt.Sprintf("%v ", radius), mx, my)
 	if radius < 3.2 {
 		screen.DrawImage(aimGood, op)
 	} else if radius < 6 {
@@ -102,7 +110,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		screen.DrawImage(aimBad, op)
 	}
 
-	ebitenutil.DrawLine(screen, float64(g.player.X), float64(g.player.Y), float64(mx), float64(my), color.RGBA{255, 0, 0, 255})
+	//ebitenutil.DrawLine(screen, float64(g.player.X), float64(g.player.Y), float64(mx), float64(my), color.RGBA{255, 0, 0, 255})
 
 	for _, ball := range g.balls {
 		// ballDx := math.Abs(ball.DestX - ball.X)
@@ -125,8 +133,18 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		//ebitenutil.DrawCircle(screen, ball.X, ball.Y, 2, color.RGBA{255, 10, 255, 255})
 
 	}
+	op = &ebiten.DrawImageOptions{}
+	op.GeoM.Scale(4, 4)
+	for i := 0; i < 10; i++ {
+		screen.DrawImage(levelProtoDbg[i], op)
+		op.GeoM.Translate(64, 0)
+	}
+	op = &ebiten.DrawImageOptions{}
+	op.GeoM.Scale(4, 4)
+	op.GeoM.Translate(0, 128)
+	screen.DrawImage(levelPrototype, op)
 
-	ebitenutil.DebugPrint(screen, fmt.Sprintf("FPS: %v (ball count %v) | TPS: %v", ebiten.CurrentFPS(), len(g.balls), ebiten.CurrentTPS()))
+	//ebitenutil.DebugPrint(screen, fmt.Sprintf("FPS: %v (ball count %v) | TPS: %v", ebiten.CurrentFPS(), len(g.balls), ebiten.CurrentTPS()))
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
