@@ -1,0 +1,5 @@
+- a buisnessman of some variety, you see a weather forecast and you must quickly put together the right outfit for the job
+- rapid randomly generated dungeon crawler
+    ^ this but what if projectiles with golf physics, angry golfer trying to get home?
+    - golf but you have to take out the golf carts coming to get you?
+        - randomized club abilities, ball types, etc. could add more
