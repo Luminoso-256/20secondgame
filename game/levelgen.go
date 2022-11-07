@@ -1,16 +1,18 @@
 package game
 
 import (
-	"fmt"
 	"image/color"
 	"math/rand"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
 const (
-	N = 16
+	W = 32
+	H = 32
+	M = 5
+	P = 0.125
+
 	Z = 20
 )
 
@@ -20,35 +22,90 @@ type Street struct {
 
 func GenerateLevel() (*ebiten.Image, []*ebiten.Image) {
 	var debug []*ebiten.Image
+	var grid [W][H]bool
 	for i := 0; i < Z; i++ {
-		debug = append(debug, ebiten.NewImage(N, N))
+		debug = append(debug, ebiten.NewImage(W, H))
 		debug[i].Fill(color.White)
 	}
-	img := ebiten.NewImage(N, N)
+	img := ebiten.NewImage(W, H)
 	img.Fill(color.White)
 
-	rX := 8
-	rY := 8
+	for i := 0; i < 6; i++ {
+		x := 0
+		y := 0
+		dir := rand.Intn(4)
+		dist := 0
+		init := dir
 
-	var avenues []Street
-	numAvenues := rand.Intn(3) + 5
-	numAvFromRoot := rand.Intn(numAvenues) + 1
-	fmt.Printf("total aves: %v | from root: %v\n", numAvenues, numAvFromRoot)
-	for i := 0; i < numAvFromRoot; i++ {
-		avenues = append(avenues, Street{
-			rX, rY, rand.Intn(N + 1), rY + rand.Intn(N+1),
-		})
+		switch init {
+		case 0: //Down
+			x = rand.Intn(W)
+			y = H - 1
+		case 1: //Up
+			x = rand.Intn(W)
+		case 2: //Left
+			y = rand.Intn(H)
+			x = W - 1
+		case 3: //Right
+			y = rand.Intn(H)
+		}
+		if i == 0 {
+			//we need a **FOR SURE YOU CAN PLACE PLAYER HERE!!**  point
+			x = W / 2
+			y = H / 2
+		}
+
+		for !(x < 0) && !(x >= W) && !(y < 0) && !(y >= H) {
+			grid[x][y] = true
+
+			x1 := false
+			x2 := false
+			y1 := false
+			y2 := false
+			if x-1 >= 0 {
+				x1 = grid[x-1][y]
+			}
+			if x+1 < W {
+				x2 = grid[x+1][y]
+			}
+			if y-1 >= 0 {
+				y1 = grid[x][y-1]
+			}
+			if y+1 < H {
+				y2 = grid[x][y+1]
+			}
+
+			if rand.Float32() < P && dist >= M ||
+				(dir < 2) && (x1 || x2) ||
+				(dir > 1) && (y1 || y2) {
+
+				if dir > 1 {
+					dir = rand.Intn(2)
+				} else {
+					dir = rand.Intn(2) + 2
+				}
+				dist = 0
+			}
+			switch dir {
+			case 0:
+				y--
+			case 1:
+				y++
+			case 2:
+				x--
+			case 3:
+				x++
+			}
+			dist++
+		}
 	}
-	// for i := 0; i < (numAvenues - numAvFromRoot); i++ {
-	// 	toIntersect := avenues[rand.Intn(len(avenues))]
-	// 	avenues = append(avenues, Street{
-	// 		toIntersect.sy, -1 * toIntersect.sx,
-	// 		toIntersect.sy, -1 * toIntersect.ex,
-	// 	})
-	// }
 
-	for _, street := range avenues {
-		ebitenutil.DrawLine(img, float64(street.sx), float64(street.sy), float64(street.ex), float64(street.ey), color.Black)
+	for x, l := range grid {
+		for y, b := range l {
+			if b {
+				img.Set(x, y, color.Black)
+			}
+		}
 	}
 
 	return img, debug

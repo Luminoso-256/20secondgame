@@ -53,7 +53,7 @@ func BallMoveTick(b Ball, g *Game) Ball {
 				if g.Level[x][y].CurrentSalt >= g.Level[x][y].SaltingThreshold {
 					g.Level[x][y].IsSalted = true
 				}
-				b.CanBeRemoved = true
+				//	b.CanBeRemoved = true
 			}
 		} else {
 			b.CanBeRemoved = true //what else are we gonna do with it?

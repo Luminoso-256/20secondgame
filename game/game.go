@@ -73,13 +73,13 @@ func (g *Game) Update() error {
 	for _, key := range inpututil.PressedKeys() {
 		switch key {
 		case ebiten.KeyW:
-			g.Player.Y -= 4
+			g.Player.Y -= 5
 		case ebiten.KeyS:
-			g.Player.Y += 4
+			g.Player.Y += 5
 		case ebiten.KeyA:
-			g.Player.X -= 4
+			g.Player.X -= 5
 		case ebiten.KeyD:
-			g.Player.X += 4
+			g.Player.X += 5
 		}
 	}
 
@@ -98,9 +98,6 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		for y, t := range r {
 			if t.IsSalted {
 				ebitenutil.DrawRect(screen, float64(x)*32, float64(y)*32, 32, 32, color.RGBA{0, 255, 0, 100})
-			} else {
-				//	ebitenutil.DrawRect(screen, float64(x)*32, float64(y)*32, 32, 32, color.RGBA{255, 0, 0, 100})
-				//ebitenutil.DebugPrintAt(screen, fmt.Sprintf("%v/%v", t.CurrentSalt, t.SaltingThreshold), x*32, y*32)
 			}
 		}
 	}
@@ -131,20 +128,6 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	//ebitenutil.DrawLine(screen, float64(g.Player.X), float64(g.Player.Y), float64(mx), float64(my), color.RGBA{255, 0, 0, 255})
 
 	for _, ball := range g.Balls {
-		// ballDx := math.Abs(ball.DestX - ball.X)
-		// ballDy := math.Abs(ball.DestY - ball.Y)
-		// ballCx := math.Sqrt((ballDx * ballDx) + (ballDy * ballDy))
-		// ballTx := math.Sqrt((ball.DestX * ball.DestX) + (ball.DestY * ball.DestY))
-
-		// progress := ballCx / ballTx
-
-		// //quadratic in line.
-		// modifier := (-1 * (math.Pow((2*progress)-1, 2) + 2)) / 2
-
-		// for i := 0.0; i < 1; i += 0.1 {
-		// 	res := (-1 * (math.Pow((2*i)-1, 2) + 2)) / 2
-		// 	ebitenutil.DrawRect(screen, i*10, res*10, 2, 2, color.Black)
-		// }
 		op := &ebiten.DrawImageOptions{}
 		op.GeoM.Scale(0.5, 0.5)
 		op.GeoM.Translate(ball.X, ball.Y)
@@ -168,6 +151,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	screen.DrawImage(g.Assets.Img["ui/bars/score"], op)
 	//todo: actual font
 	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Score: ##"), 40, 54)
+	op = &ebiten.DrawImageOptions{}
+	op.GeoM.Scale(6, 6)
+	screen.DrawImage(levelPrototype, op)
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
