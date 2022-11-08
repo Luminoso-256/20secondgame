@@ -5,32 +5,48 @@ import (
 	"math/rand"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/shawnridgeway/wfc"
 )
 
 const (
-	W = 32
-	H = 32
-	M = 5
+	W = 30
+	H = 24
+	M = 7
 	P = 0.125
-
-	Z = 20
 )
 
 type Street struct {
 	sx, sy, ex, ey int
 }
 
-func GenerateLevel() (*ebiten.Image, []*ebiten.Image) {
+func GenerateLevel_WFC() (*ebiten.Image, []*ebiten.Image) {
+
+	data := wfc.SimpleTiledData{
+		Unique:    false,
+		TileSize:  16,
+		Tiles:     []wfc.Tile{},
+		Neighbors: []wfc.Neighbor{},
+	}
+
+	// Create a new model
+	model := wfc.NewSimpleTiledModel(data, 20, 20, false)
+
+	// Run the algorithm until success or contradiction
+	outputImg, _ := model.Generate()
+
+	// Run the algorithm 10 times, stopping at success or contradiction
+	outputImg, _, _ = model.Iterate(10)
+
+	return ebiten.NewImageFromImage(outputImg), []*ebiten.Image{}
+}
+
+func GenerateLevel(g *Game) (*ebiten.Image, []*ebiten.Image) {
 	var debug []*ebiten.Image
 	var grid [W][H]bool
-	for i := 0; i < Z; i++ {
-		debug = append(debug, ebiten.NewImage(W, H))
-		debug[i].Fill(color.White)
-	}
-	img := ebiten.NewImage(W, H)
-	img.Fill(color.White)
 
-	for i := 0; i < 6; i++ {
+	img := ebiten.NewImage(W, H)
+
+	for i := 0; i < 4; i++ {
 		x := 0
 		y := 0
 		dir := rand.Intn(4)
@@ -55,35 +71,38 @@ func GenerateLevel() (*ebiten.Image, []*ebiten.Image) {
 			y = H / 2
 		}
 
-		for !(x < 0) && !(x >= W) && !(y < 0) && !(y >= H) {
-			grid[x][y] = true
+		turn := false
+		grid[x][y] = true
+		for true {
 
 			x1 := false
 			x2 := false
 			y1 := false
 			y2 := false
-			if x-1 >= 0 {
-				x1 = grid[x-1][y]
+			if !turn {
+				if x-1 >= 0 {
+					x1 = grid[x-1][y]
+				}
+				if x+1 < W {
+					x2 = grid[x+1][y]
+				}
+				if y-1 >= 0 {
+					y1 = grid[x][y-1]
+				}
+				if y+1 < H {
+					y2 = grid[x][y+1]
+				}
 			}
-			if x+1 < W {
-				x2 = grid[x+1][y]
-			}
-			if y-1 >= 0 {
-				y1 = grid[x][y-1]
-			}
-			if y+1 < H {
-				y2 = grid[x][y+1]
-			}
-
 			if rand.Float32() < P && dist >= M ||
 				(dir < 2) && (x1 || x2) ||
-				(dir > 1) && (y1 || y2) {
+				(dir > 1) && (y1 || y2) || turn {
 
 				if dir > 1 {
 					dir = rand.Intn(2)
 				} else {
 					dir = rand.Intn(2) + 2
 				}
+				turn = false
 				dist = 0
 			}
 			switch dir {
@@ -96,14 +115,51 @@ func GenerateLevel() (*ebiten.Image, []*ebiten.Image) {
 			case 3:
 				x++
 			}
+			if !(x < 0) && !(x >= W) && !(y < 0) && !(y >= H) {
+				grid[x][y] = true
+			}
 			dist++
+			if x < 0 || x >= W {
+				if init < 2 {
+					turn = true
+				} else {
+					break
+				}
+			}
+			if y < 0 || y >= H {
+				if init > 1 {
+					turn = true
+				} else {
+					break
+				}
+			}
 		}
 	}
-
+	g.levelOverlayLayers[1].Clear()
+	g.levelOverlayLayers[0].Clear()
 	for x, l := range grid {
 		for y, b := range l {
 			if b {
+				//the actual level
+				op := &ebiten.DrawImageOptions{}
+				op.GeoM.Scale(2, 2)
+				op.GeoM.Translate(float64(x)*32, float64(y)*32)
+				g.levelOverlayLayers[0].DrawImage(g.Assets.Img["tile/cobble"], op)
 				img.Set(x, y, color.Black)
+				//backend data
+				g.Level[x][y].T = 1
+				g.Level[x][y].SaltingThreshold = 3
+				g.Level[x][y].CurrentSalt = 0
+				g.Level[x][y].IsSalted = false
+			} else {
+				op := &ebiten.DrawImageOptions{}
+				op.GeoM.Scale(2, 2)
+				op.GeoM.Translate(float64(x)*32, float64(y)*32)
+				g.levelOverlayLayers[0].DrawImage(g.Assets.Img["tile/grass"], op)
+				g.Level[x][y].T = 0
+				g.Level[x][y].SaltingThreshold = 5
+				g.Level[x][y].CurrentSalt = 0
+				g.Level[x][y].IsSalted = false
 			}
 		}
 	}

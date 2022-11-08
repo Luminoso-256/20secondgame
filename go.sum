@@ -21,6 +21,8 @@ github.com/shawnridgeway/wfc v0.0.0-20190128154422-38a8756f8ba4 h1:Pb+PDSbofJj4x
 github.com/shawnridgeway/wfc v0.0.0-20190128154422-38a8756f8ba4/go.mod h1:aCZAkiEvqZ2Q5MlKTzecE/Va3LcApfUTIMkRT97rrCk=
 github.com/yuin/goldmark v1.4.0/go.mod h1:mwnBkeHKe2W/ZEtQ+71ViKU8L12m81fl3OWwC1Zlc8k=
 github.com/yuin/goldmark v1.4.13/go.mod h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5taEt/CY=
+github.com/zfedoran/go-wfc v0.0.9 h1:C1uhB2fDONuYAQuD/V4wLlYorGLx727uPol56OEbs4c=
+github.com/zfedoran/go-wfc v0.0.9/go.mod h1:f4TACsAGDNmZj3Cain4JWVSTg0gMTk0nkKiwAxIrARs=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
 golang.org/x/crypto v0.0.0-20190510104115-cbcb75029529/go.mod h1:yigFU9vqHzYiE8UmvKecakEJjdnWj3jj499lnFckfCI=
 golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550/go.mod h1:yigFU9vqHzYiE8UmvKecakEJjdnWj3jj499lnFckfCI=

@@ -1,13 +1,19 @@
 package game
 
 import (
+	"image/color"
 	"math"
 	"time"
+
+	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
 type Player struct {
-	X int
-	Y int
+	X    float64
+	Y    float64
+	momX float64
+	momY float64
 }
 
 type Ball struct {
@@ -17,6 +23,7 @@ type Ball struct {
 	DestY        float64
 	Speed        float64
 	CanBeRemoved bool
+	HasSalted    bool
 }
 
 type MapTile struct {
@@ -27,11 +34,13 @@ type MapTile struct {
 }
 
 type Game struct {
-	Player    Player
-	Balls     []Ball
-	Assets    AssetRegistry
-	startTime time.Time
-	Level     [32][32]MapTile
+	Player             Player
+	Balls              []Ball
+	Assets             AssetRegistry
+	Score              int
+	startTime          time.Time
+	Level              [32][32]MapTile
+	levelOverlayLayers []*ebiten.Image
 }
 
 func BallMoveTick(b Ball, g *Game) Ball {
@@ -47,13 +56,27 @@ func BallMoveTick(b Ball, g *Game) Ball {
 		//flag a tile and *kill*
 		x := int(b.X / 32)
 		y := int(b.Y / 32)
-		if x >= 0 && x <= 32 {
-			if y >= 0 && y <= 32 {
-				g.Level[x][y].CurrentSalt += 1
-				if g.Level[x][y].CurrentSalt >= g.Level[x][y].SaltingThreshold {
-					g.Level[x][y].IsSalted = true
+		if x >= 0 && x < 32 {
+			if y >= 0 && y < 32 {
+				if !b.HasSalted && !g.Level[x][y].IsSalted {
+					g.Level[x][y].CurrentSalt += 1
+					if g.Level[x][y].T == 1 {
+						if g.Level[x][y].CurrentSalt >= g.Level[x][y].SaltingThreshold {
+							g.Level[x][y].IsSalted = true
+							g.Score++
+						}
+						//add onto overlay 1 (salting)
+						ebitenutil.DrawRect(g.levelOverlayLayers[1], float64(x)*32, float64(y)*32, 32, 32, color.RGBA{255, 255, 255, 20})
+					} else { //grass becomes mud
+						op := &ebiten.DrawImageOptions{}
+						op.ColorM.Scale(1, 1, 1, 0.1)
+						op.GeoM.Scale(2, 2)
+						op.GeoM.Translate(float64(x)*32, float64(y)*32)
+						g.levelOverlayLayers[1].DrawImage(g.Assets.Img["tile/dirt"], op)
+					}
+					//	b.CanBeRemoved = true
+					b.HasSalted = true
 				}
-				//	b.CanBeRemoved = true
 			}
 		} else {
 			b.CanBeRemoved = true //what else are we gonna do with it?
