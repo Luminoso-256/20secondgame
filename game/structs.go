@@ -40,7 +40,11 @@ type Game struct {
 	Score              int
 	startTime          time.Time
 	Level              [32][32]MapTile
+	BestPossibleScore  int
 	levelOverlayLayers []*ebiten.Image
+	lastFrameSx        int
+	lastFrameSy        int
+	debugOverlay       *ebiten.Image
 }
 
 func BallMoveTick(b Ball, g *Game) Ball {
@@ -58,8 +62,12 @@ func BallMoveTick(b Ball, g *Game) Ball {
 		y := int(b.Y / 32)
 		if x >= 0 && x < 32 {
 			if y >= 0 && y < 32 {
-				if !b.HasSalted && !g.Level[x][y].IsSalted {
+				if g.Level[x][y].T == 10 {
+					b.CanBeRemoved = true
+
+				} else if !b.HasSalted && !g.Level[x][y].IsSalted {
 					g.Level[x][y].CurrentSalt += 1
+
 					if g.Level[x][y].T == 1 {
 						if g.Level[x][y].CurrentSalt >= g.Level[x][y].SaltingThreshold {
 							g.Level[x][y].IsSalted = true

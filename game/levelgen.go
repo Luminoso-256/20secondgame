@@ -11,7 +11,7 @@ import (
 const (
 	W = 30
 	H = 24
-	M = 7
+	M = 8
 	P = 0.125
 )
 
@@ -43,6 +43,8 @@ func GenerateLevel_WFC() (*ebiten.Image, []*ebiten.Image) {
 func GenerateLevel(g *Game) (*ebiten.Image, []*ebiten.Image) {
 	var debug []*ebiten.Image
 	var grid [W][H]bool
+	var gridSW [W][H]bool
+	var gridG [W][H]bool
 
 	img := ebiten.NewImage(W, H)
 
@@ -137,9 +139,94 @@ func GenerateLevel(g *Game) (*ebiten.Image, []*ebiten.Image) {
 	}
 	g.levelOverlayLayers[1].Clear()
 	g.levelOverlayLayers[0].Clear()
+
 	for x, l := range grid {
 		for y, b := range l {
 			if b {
+				if x < W-2 {
+					gridSW[x+1][y] = b
+				}
+				if x > 0 {
+					gridSW[x-1][y] = b
+				}
+				if y < H-2 {
+					gridSW[x][y+1] = b
+				}
+				if y > 0 {
+					gridSW[x][y-1] = b
+				}
+			}
+		}
+	}
+	for x, l := range gridSW {
+		for y, b := range l {
+			if b {
+				if x < W-2 {
+					gridG[x+1][y] = b
+				}
+				if x > 0 {
+					gridG[x-1][y] = b
+				}
+				if y < H-2 {
+					gridG[x][y+1] = b
+				}
+				if y > 0 {
+					gridG[x][y-1] = b
+				}
+			}
+		}
+	}
+
+	for x, l := range gridG {
+		for y, b := range l {
+			op := &ebiten.DrawImageOptions{}
+			op.GeoM.Scale(2, 2)
+			op.GeoM.Translate(float64(x)*32, float64(y)*32)
+			if b {
+				//the actual level
+				g.levelOverlayLayers[0].DrawImage(g.Assets.Img["tile/grass"], op)
+				g.Level[x][y].T = 0
+				g.Level[x][y].SaltingThreshold = 3
+				g.Level[x][y].CurrentSalt = 0
+				g.Level[x][y].IsSalted = false
+			} else {
+				g.levelOverlayLayers[0].DrawImage(g.Assets.Img["tile/temptree"], op)
+				g.Level[x][y].T = 10 //building
+				g.Level[x][y].SaltingThreshold = 3
+				g.Level[x][y].CurrentSalt = 0
+				g.Level[x][y].IsSalted = false
+			}
+		}
+	}
+
+	for x, l := range gridSW {
+		for y, b := range l {
+			if b {
+				//the actual level
+				op := &ebiten.DrawImageOptions{}
+				op.GeoM.Scale(2, 2)
+				op.GeoM.Translate(float64(x)*32, float64(y)*32)
+				g.levelOverlayLayers[0].DrawImage(g.Assets.Img["tile/dead_grass"], op)
+				g.Level[x][y].T = 5 //sidewalk
+				g.Level[x][y].SaltingThreshold = 3
+				g.Level[x][y].CurrentSalt = 0
+				g.Level[x][y].IsSalted = false
+			}
+		}
+	}
+
+	px := 0.
+	py := 0.
+
+	for x, l := range grid {
+		for y, b := range l {
+			if b {
+
+				if px == 0 && py == 0 {
+					px = float64(x)
+					py = float64(y)
+				}
+
 				//the actual level
 				op := &ebiten.DrawImageOptions{}
 				op.GeoM.Scale(2, 2)
@@ -151,18 +238,22 @@ func GenerateLevel(g *Game) (*ebiten.Image, []*ebiten.Image) {
 				g.Level[x][y].SaltingThreshold = 3
 				g.Level[x][y].CurrentSalt = 0
 				g.Level[x][y].IsSalted = false
-			} else {
-				op := &ebiten.DrawImageOptions{}
-				op.GeoM.Scale(2, 2)
-				op.GeoM.Translate(float64(x)*32, float64(y)*32)
-				g.levelOverlayLayers[0].DrawImage(g.Assets.Img["tile/grass"], op)
-				g.Level[x][y].T = 0
-				g.Level[x][y].SaltingThreshold = 5
-				g.Level[x][y].CurrentSalt = 0
-				g.Level[x][y].IsSalted = false
+				g.BestPossibleScore++
 			}
+			// else {
+			// 	op := &ebiten.DrawImageOptions{}
+			// 	op.GeoM.Scale(2, 2)
+			// 	op.GeoM.Translate(float64(x)*32, float64(y)*32)
+			// 	g.levelOverlayLayers[0].DrawImage(g.Assets.Img["tile/grass"], op)
+			// 	g.Level[x][y].T = 0
+			// 	g.Level[x][y].SaltingThreshold = 5
+			// 	g.Level[x][y].CurrentSalt = 0
+			// 	g.Level[x][y].IsSalted = false
+			// }
 		}
 	}
+	g.Player.X = px * 32
+	g.Player.Y = py * 32
 
 	return img, debug
 }

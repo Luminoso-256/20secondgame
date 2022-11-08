@@ -13,14 +13,18 @@ import (
 //go:embed data/*
 var embedFS embed.FS
 
+const (
+	Dbg_LOCALASSETS = false
+)
+
 func main() {
 	ebiten.SetWindowSize(640, 480)
-	ebiten.SetWindowTitle("20-Second Game")
+	ebiten.SetWindowTitle("SaltRush")
 	g := &game.Game{
 		Player: game.Player{
 			X: 640 / 2, Y: 480 / 2,
 		},
-		Assets: game.LoadAssets(true, embedFS),
+		Assets: game.LoadAssets(Dbg_LOCALASSETS, embedFS),
 	}
 	g.Init()
 	if err := ebiten.RunGame(g); err != nil {
