@@ -58,10 +58,15 @@ func (g *Game) Update() error {
 	g.Balls = newBalls
 	mx, my := ebiten.CursorPosition()
 
+	mx -= g.lastFrameSx
+	//mx /= 2
+	my -= g.lastFrameSy
+	//my /= 2
+
 	px := g.Player.X //- float64(g.lastFrameSx) //- sx
-	py := g.Player.Y // - float64(g.lastFrameSy) //- sy
-	//px *= 2
-	//py *= 2
+	py := g.Player.Y //- float64(g.lastFrameSy) //- sy
+	// px /= 2
+	// py /= 2
 	g.debugOverlay.Clear()
 
 	ebitenutil.DrawLine(g.debugOverlay, px, py, float64(mx), float64(my), color.RGBA{255, 0, 0, 255})
