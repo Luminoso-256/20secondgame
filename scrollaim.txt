@@ -1,0 +1,4 @@
+- Start with "screenspace" cords (0-960), (0-720)
+- divide both by 2 (accounts for scaling)
+- add the clipframe sx & sy to offset against the *whole* surface
+
