@@ -13,7 +13,6 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
-
 )
 
 const (
@@ -21,9 +20,9 @@ const (
 )
 
 var (
-	DEBUG_moreThan20Secs = false
+	DEBUG_moreThan20Secs  = false
 	DEBUG_showLevelLayers = false
-	levelPrototype *ebiten.Image
+	levelPrototype        *ebiten.Image
 
 	emptyImage    = ebiten.NewImage(3, 3)
 	emptySubImage = emptyImage.SubImage(image.Rect(1, 1, 2, 2)).(*ebiten.Image)
@@ -32,11 +31,11 @@ var (
 func (g *Game) Init() {
 	g.startTime = time.Now()
 	emptyImage.Fill(color.White)
-	for i := 0; i < 4; i++{
+	for i := 0; i < 4; i++ {
 		g.levelOverlayLayers = append(g.levelOverlayLayers,
 			ebiten.NewImage(32*32, 32*32))
 	}
-	g.debugOverlay = ebiten.NewImage(32*32,32*32)
+	g.debugOverlay = ebiten.NewImage(32*32, 32*32)
 	levelPrototype = GenerateLevel(g)
 }
 
@@ -166,20 +165,30 @@ func (g *Game) Update() error {
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	if DEBUG_showLevelLayers{
+
+	//== Titlescreen (State 0)
+	if g.GameState == 0 {
+		screen.Fill(color.RGBA{40, 40, 40, 255})
+		ebitenutil.DebugPrint(screen, "This is going to be a titlescreen")
+		ebitenutil.DebugPrintAt(screen, "Press [X] to start", 0, 20)
+		return //no other draw logic for title
+	}
+	//== Gameplay (State 1)
+
+	if DEBUG_showLevelLayers {
 		op := &ebiten.DrawImageOptions{}
-		op.GeoM.Scale(0.1,0.1)
-		op.GeoM.Translate(0,32*32/10)
-		for _,l := range g.levelOverlayLayers{
-			g.debugOverlay.DrawImage(l,op)
-			op.GeoM.Translate(0,32*32/10)
+		op.GeoM.Scale(0.1, 0.1)
+		op.GeoM.Translate(0, 32*32/10)
+		for _, l := range g.levelOverlayLayers {
+			g.debugOverlay.DrawImage(l, op)
+			op.GeoM.Translate(0, 32*32/10)
 		}
 	}
 	screen.Fill(color.RGBA{40, 40, 40, 255})
 	g.levelOverlayLayers[3].Fill(color.RGBA{15, 15, 15, 255})
 
 	DrawLightCircle(g.levelOverlayLayers[3], g.Player.X+16, g.Player.Y+16, 128, color.RGBA{255, 245, 245, 100})
-	
+
 	for i, layer := range g.levelOverlayLayers {
 		if i == 3 {
 			op := &ebiten.DrawImageOptions{}
@@ -266,7 +275,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	op = &ebiten.DrawImageOptions{}
 	op.GeoM.Scale(radius, radius)
 	op.GeoM.Translate(float64(mx)-8*radius, float64(my)-8*radius)
-	
+
 	if radius < 3.2 {
 		screen.DrawImage(g.Assets.Img["ui/aimmarker_sm2"], op)
 	} else if radius < 8 {
@@ -288,6 +297,11 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	//todo: actual font
 	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Score: %v (%v)", g.Score, float64(g.Score)/float64(g.BestPossibleScore)), 40, 54)
 	screen.DrawImage(g.debugOverlay, nil)
+
+	//gameover is drawn *over* the main game render
+	if g.GameState == 2 {
+		//TODO
+	}
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {

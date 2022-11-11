@@ -38,6 +38,7 @@ type AABB struct {
 }
 
 type Game struct {
+	GameState          int
 	Player             Player
 	Balls              []Ball
 	Assets             AssetRegistry
