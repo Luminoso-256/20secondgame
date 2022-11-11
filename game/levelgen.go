@@ -3,9 +3,7 @@ package game
 import (
 	"image/color"
 	"math/rand"
-
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/shawnridgeway/wfc"
 )
 
 const (
@@ -19,29 +17,7 @@ type Street struct {
 	sx, sy, ex, ey int
 }
 
-func GenerateLevel_WFC() (*ebiten.Image, []*ebiten.Image) {
-
-	data := wfc.SimpleTiledData{
-		Unique:    false,
-		TileSize:  16,
-		Tiles:     []wfc.Tile{},
-		Neighbors: []wfc.Neighbor{},
-	}
-
-	// Create a new model
-	model := wfc.NewSimpleTiledModel(data, 20, 20, false)
-
-	// Run the algorithm until success or contradiction
-	outputImg, _ := model.Generate()
-
-	// Run the algorithm 10 times, stopping at success or contradiction
-	outputImg, _, _ = model.Iterate(10)
-
-	return ebiten.NewImageFromImage(outputImg), []*ebiten.Image{}
-}
-
-func GenerateLevel(g *Game) (*ebiten.Image, []*ebiten.Image) {
-	var debug []*ebiten.Image
+func GenerateLevel(g *Game) *ebiten.Image {
 	var grid [W][H]bool
 	var gridSW [W][H]bool
 	var gridG [W][H]bool
@@ -255,5 +231,5 @@ func GenerateLevel(g *Game) (*ebiten.Image, []*ebiten.Image) {
 	g.Player.X = px * 32
 	g.Player.Y = py * 32
 
-	return img, debug
+	return img
 }
