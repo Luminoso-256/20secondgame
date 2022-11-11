@@ -1,9 +1,15 @@
 package game
 
 import (
+	"image"
 	"image/color"
+	"image/jpeg"
+	"log"
 	"math/rand"
+	"os"
+
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
 const (
@@ -230,6 +236,43 @@ func GenerateLevel(g *Game) *ebiten.Image {
 	}
 	g.Player.X = px * 32
 	g.Player.Y = py * 32
+
+	//now, build the collision map
+	boxes := []AABB{}
+
+	currentBox := AABB{
+		0, 0, 0, 0,
+	}
+
+	for x := 0; x < W; x++ {
+		for y := 0; y < H; y++ {
+			if !gridG[x][y] {
+				boxes = append(boxes, currentBox)
+				x++
+				y++
+				currentBox = AABB{
+					x * 32, y * 32, 0, 0,
+				}
+			} else {
+				currentBox.h += 32
+			}
+		}
+		currentBox.w += 32
+	}
+
+	demo := ebiten.NewImage(32*32, 32*32)
+	for _, box := range boxes {
+		ebitenutil.DrawRect(demo, float64(box.x), float64(box.y), float64(box.w), float64(box.h), color.RGBA{0, 255, 0, 200})
+	}
+
+	f, err := os.Create("test_boxes.jpg")
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+	if err = jpeg.Encode(f, demo.SubImage(image.Rect(0, 0, 32*32, 32*32)), nil); err != nil {
+		log.Printf("failed to encode: %v", err)
+	}
 
 	return img
 }

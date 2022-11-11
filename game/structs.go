@@ -33,6 +33,10 @@ type MapTile struct {
 	IsSalted         bool
 }
 
+type AABB struct {
+	x, y, w, h int
+}
+
 type Game struct {
 	Player             Player
 	Balls              []Ball
