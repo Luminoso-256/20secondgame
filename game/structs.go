@@ -10,10 +10,12 @@ import (
 )
 
 type Player struct {
-	X    float64
-	Y    float64
-	momX float64
-	momY float64
+	X        float64
+	Y        float64
+	momX     float64
+	momY     float64
+	Dir      string
+	Rotation float64
 }
 
 type Ball struct {
@@ -50,6 +52,7 @@ type Game struct {
 	lastFrameSx        int
 	lastFrameSy        int
 	debugOverlay       *ebiten.Image
+	colOverlay         *ebiten.Image
 }
 
 func BallMoveTick(b Ball, g *Game) Ball {
@@ -76,6 +79,11 @@ func BallMoveTick(b Ball, g *Game) Ball {
 					if g.Level[x][y].T == 1 {
 						if g.Level[x][y].CurrentSalt >= g.Level[x][y].SaltingThreshold {
 							g.Level[x][y].IsSalted = true
+							op := &ebiten.DrawImageOptions{}
+
+							op.GeoM.Scale(2, 2)
+							op.GeoM.Translate(float64(x)*32, float64(y)*32)
+							g.levelOverlayLayers[1].DrawImage(g.Assets.Img["tile/tempsalted"], op)
 							g.Score++
 						}
 						//add onto overlay 1 (salting)

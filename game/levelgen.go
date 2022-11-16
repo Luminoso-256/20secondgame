@@ -1,15 +1,10 @@
 package game
 
 import (
-	"image"
 	"image/color"
-	"image/jpeg"
-	"log"
 	"math/rand"
-	"os"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
 const (
@@ -237,42 +232,60 @@ func GenerateLevel(g *Game) *ebiten.Image {
 	g.Player.X = px * 32
 	g.Player.Y = py * 32
 
-	//now, build the collision map
-	boxes := []AABB{}
+	// //now, build the collision map
+	// boxes := []AABB{}
 
-	currentBox := AABB{
-		0, 0, 0, 0,
-	}
+	// var colDoneMask [W][H]bool
+	// originX := 0
+	// originY := 0
 
-	for x := 0; x < W; x++ {
-		for y := 0; y < H; y++ {
-			if !gridG[x][y] {
-				boxes = append(boxes, currentBox)
-				x++
-				y++
-				currentBox = AABB{
-					x * 32, y * 32, 0, 0,
-				}
-			} else {
-				currentBox.h += 32
-			}
-		}
-		currentBox.w += 32
-	}
+	// for i := 0; i < 5; i++ {
+	// 	scanDone := false
+	// 	for x := 0; x < W; x++ {
+	// 		for y := 0; y < H; y++ {
+	// 			if !colDoneMask[x][y] {
+	// 				colDoneMask[originX][originY] = true //never pick me again!!!
+	// 				ebitenutil.DrawRect(img, 32*float64(x), float64(y)*32, 32, 32, color.RGBA{0, 255, 0, 100})
+	// 				originX = x
+	// 				originY = y
+	// 				scanDone = true
+	// 				break
+	// 			} else {
 
-	demo := ebiten.NewImage(32*32, 32*32)
-	for _, box := range boxes {
-		ebitenutil.DrawRect(demo, float64(box.x), float64(box.y), float64(box.w), float64(box.h), color.RGBA{0, 255, 0, 200})
-	}
+	// 				ebitenutil.DrawRect(img, 32*float64(x), float64(y)*32, 32, 32, color.RGBA{0, 0, 255, 100})
+	// 			}
+	// 		}
+	// 		if scanDone {
+	// 			break
+	// 		}
+	// 	}
 
-	f, err := os.Create("test_boxes.jpg")
-	if err != nil {
-		panic(err)
-	}
-	defer f.Close()
-	if err = jpeg.Encode(f, demo.SubImage(image.Rect(0, 0, 32*32, 32*32)), nil); err != nil {
-		log.Printf("failed to encode: %v", err)
-	}
+	// 	endX := originX
+	// 	endY := originY
+	// 	gDim := false
+	// 	for !gridG[endX][endY] {
+	// 		colDoneMask[endX][endY] = true
+	// 		if gDim {
+	// 			endX += 1
+	// 		} else {
+	// 			endY += 1
+	// 		}
+	// 		if endX >= W || endY >= H {
+	// 			break
+	// 		}
+	// 	}
+	// 	//build rect
+	// 	boxes = append(boxes, AABB{
+	// 		32 * originX, 32 * originY, 32 * endX, 32 * (endY + 1),
+	// 	})
+	// 	fmt.Printf("(%v,%v) -> (%v,%v)\n", originX, originY, endX, endY)
+	// }
 
+	// demo := ebiten.NewImage(32*32, 32*32)
+	// fmt.Printf("%v boxes\n", len(boxes))
+	// for _, box := range boxes {
+	// 	ebitenutil.DrawRect(demo, float64(box.x), float64(box.y), float64(box.w), float64(box.h), color.RGBA{0, 255, 0, 200})
+	// }
+	// g.colOverlay.DrawImage(demo, nil)
 	return img
 }

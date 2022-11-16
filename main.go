@@ -15,7 +15,7 @@ var embedFS embed.FS
 
 const (
 	Dbg_LOCAL_ASSETS   = false
-	Dbg_NO_TITLESCREEN = false
+	Dbg_NO_TITLESCREEN = true
 )
 
 func main() {
@@ -28,6 +28,7 @@ func main() {
 	g := &game.Game{
 		Player: game.Player{
 			X: 640 / 2, Y: 480 / 2,
+			Dir: "u",
 		},
 		Assets:    game.LoadAssets(Dbg_LOCAL_ASSETS, embedFS),
 		GameState: s,
