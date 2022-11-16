@@ -1,10 +1,11 @@
 package game
 
-import(
-	"github.com/hajimehoshi/ebiten/v2/vector"
-	"github.com/hajimehoshi/ebiten/v2"
-	"math"
+import (
 	"image/color"
+	"math"
+
+	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
 func DrawLightCircle(dst *ebiten.Image, cx, cy, r float64, clr color.Color) {
@@ -26,4 +27,28 @@ func DrawLightCircle(dst *ebiten.Image, cx, cy, r float64, clr color.Color) {
 	op.CompositeMode = ebiten.CompositeModeLighter
 
 	dst.DrawTriangles(vertices, indices, emptySubImage, nil)
+}
+
+func Abs(x int) int {
+	if x < 0 {
+		return -x
+	}
+	return x
+}
+
+func roundUp(numToRound, multiple int) int {
+	if multiple == 0 {
+		return numToRound
+	}
+
+	remainder := Abs(numToRound) % multiple
+	if remainder == 0 {
+		return numToRound
+	}
+
+	if numToRound < 0 {
+		return -(Abs(numToRound) - remainder)
+	} else {
+		return numToRound + multiple - remainder
+	}
 }

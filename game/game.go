@@ -13,17 +13,18 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
-
 )
 
 const (
 	USE_TIMECHECK = true
+	DEBUG_ROTVIEW = false
 )
 
 var (
-	DEBUG_moreThan20Secs = false
+	DEBUG_moreThan20Secs  = false
 	DEBUG_showLevelLayers = false
-	levelPrototype *ebiten.Image
+	DEBUG_radians         = 0.
+	levelPrototype        *ebiten.Image
 
 	emptyImage    = ebiten.NewImage(3, 3)
 	emptySubImage = emptyImage.SubImage(image.Rect(1, 1, 2, 2)).(*ebiten.Image)
@@ -32,16 +33,21 @@ var (
 func (g *Game) Init() {
 	g.startTime = time.Now()
 	emptyImage.Fill(color.White)
-	for i := 0; i < 4; i++{
+	for i := 0; i < 4; i++ {
 		g.levelOverlayLayers = append(g.levelOverlayLayers,
 			ebiten.NewImage(32*32, 32*32))
 	}
-	g.debugOverlay = ebiten.NewImage(32*32,32*32)
+	g.colOverlay = ebiten.NewImage(32*32, 32*32)
+	g.debugOverlay = ebiten.NewImage(32*32, 32*32)
 	levelPrototype = GenerateLevel(g)
+	if DEBUG_ROTVIEW {
+		ebiten.SetWindowTitle("SaltRush ~ Rot View Radian Rotation Debugger")
+	}
 }
 
 func (g *Game) Update() error {
 	g.debugOverlay.Clear()
+	g.colOverlay.Clear()
 
 	var newBalls []Ball
 	for _, ball := range g.Balls {
@@ -90,29 +96,59 @@ func (g *Game) Update() error {
 	if ebiten.IsKeyPressed(ebiten.KeyR) {
 		levelPrototype = GenerateLevel(g)
 	}
-
+	propPx := g.Player.X
+	propPy := g.Player.Y
 	for _, key := range inpututil.PressedKeys() {
 		switch key {
 		case ebiten.KeyW:
-			g.Player.momY -= 2
+			propPy -= 5
+
+			//g.Player.momY -= 2
 		case ebiten.KeyS:
-			g.Player.momY += 2
+			propPy += 5
+
+			//g.Player.momY += 2
 		case ebiten.KeyA:
-			g.Player.momX -= 2
+			g.Player.Rotation -= 0.1
+			//propPx -= 5
+			//g.Player.Dir = "l"
+			//g.Player.momX -= 2
 		case ebiten.KeyD:
-			g.Player.momX += 2
+			g.Player.Rotation += 0.1
+			//propPx += 5
+			//g.Player.Dir = "r"
+			//g.Player.momX += 2
 		case ebiten.KeyL:
 			DEBUG_showLevelLayers = !DEBUG_showLevelLayers
+		case ebiten.Key1:
+			DEBUG_radians -= 0.005 * math.Pi
+			if DEBUG_radians < -2*math.Pi {
+				DEBUG_radians = 0
+			}
+		case ebiten.Key2:
+			DEBUG_radians += 0.005 * math.Pi
+			if DEBUG_radians > 2*math.Pi {
+				DEBUG_radians = 0
+			}
 		}
 	}
+	spRot := math.Abs(math.Mod(g.Player.Rotation, math.Pi))
+	ebitenutil.DebugPrintAt(g.colOverlay, fmt.Sprintf("R = %v [ MOD %v] ", g.Player.Rotation, spRot), int(g.Player.X), int(g.Player.Y))
+	if spRot > 5.4 || spRot < 1 {
+		g.Player.Dir = "u"
+	} else if spRot >= 4.3 && spRot <= 5.4 {
+		g.Player.Dir = "l"
+	} else if spRot <= 4.3 && spRot >= 2 {
+		g.Player.Dir = "d"
+	} else {
+		g.Player.Dir = "r"
+	}
 
-	gLX := g.Player.X
-	gLY := g.Player.Y
-
-	g.Player.X += g.Player.momX
-	g.Player.Y += g.Player.momY
-	g.Player.X = math.Floor(g.Player.X)
-	g.Player.Y = math.Floor(g.Player.Y)
+	// propPx := g.Player.X + g.Player.momX
+	// propPy := g.Player.Y + g.Player.momY
+	propPx = math.Floor(propPx)
+	propPy = math.Floor(propPy)
+	validMovement := true
 	if g.Player.momX > 10 {
 		g.Player.momX = 10
 	}
@@ -128,18 +164,33 @@ func (g *Game) Update() error {
 	g.Player.momX -= 0.05 * g.Player.momX
 	g.Player.momY -= 0.05 * g.Player.momY
 
-	pTX := int(g.Player.X / 32)
-	pTY := int(g.Player.Y / 32)
+	for x := int(g.Player.X/32) - 5; x < int(g.Player.X/32)+5; x++ {
+		for y := int(g.Player.Y/32) - 5; y < int(g.Player.Y/32)+5; y++ {
+			if x < 0 || x >= 30 || y < 0 || y >= 24 {
+				continue
+			}
 
-	if g.Level[pTX][pTY].T == 10 {
-		g.Player.momX = 0
-		g.Player.momY = 0
-		g.Player.X = gLX
-		g.Player.Y = gLY
+			if g.Level[x][y].T == 10 {
+				if x*32 <= int(propPx)+32 &&
+					x*32+32 >= int(propPx) &&
+					y*32 <= int(propPy)+32 &&
+					32+y*32 >= int(propPy) {
+					ebitenutil.DrawRect(g.colOverlay, float64(x)*32, float64(y)*32, 32, 32, color.RGBA{255, 0, 0, 50})
+					ebitenutil.DrawRect(g.colOverlay, g.Player.X, g.Player.Y, 32, 32, color.RGBA{255, 255, 0, 50})
+					validMovement = false
+				}
+				//	ebitenutil.DrawRect(g.colOverlay, float64(x)*32, float64(y)*32, 32, 32, color.RGBA{255, 0, 0, 50})
+			}
+		}
 	}
 
-	//TODO!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	//Add A HITBOX system for the love of all that is good
+	if validMovement {
+		g.Player.X = propPx
+		g.Player.Y = propPy
+	} else {
+		g.Player.momX = 0
+		g.Player.momY = 0
+	}
 
 	if g.Player.X < 0 {
 		g.Player.momX = 0
@@ -166,20 +217,33 @@ func (g *Game) Update() error {
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	if DEBUG_showLevelLayers{
+
+	//== Titlescreen (State 0)
+	if g.GameState == 0 {
+		screen.Fill(color.RGBA{40, 40, 40, 255})
+		ebitenutil.DebugPrint(screen, "This is going to be a titlescreen")
+		ebitenutil.DebugPrintAt(screen, "Press [X] to start", 0, 20)
+		return //no other draw logic for title
+	}
+	//== Gameplay (State 1)
+
+	if DEBUG_showLevelLayers {
 		op := &ebiten.DrawImageOptions{}
-		op.GeoM.Scale(0.1,0.1)
-		op.GeoM.Translate(0,32*32/10)
-		for _,l := range g.levelOverlayLayers{
-			g.debugOverlay.DrawImage(l,op)
-			op.GeoM.Translate(0,32*32/10)
+		op.GeoM.Scale(0.1, 0.1)
+		op.GeoM.Translate(0, 32*32/10)
+		for _, l := range g.levelOverlayLayers {
+			g.debugOverlay.DrawImage(l, op)
+			op.GeoM.Translate(0, 32*32/10)
 		}
 	}
 	screen.Fill(color.RGBA{40, 40, 40, 255})
 	g.levelOverlayLayers[3].Fill(color.RGBA{15, 15, 15, 255})
 
-	DrawLightCircle(g.levelOverlayLayers[3], g.Player.X+16, g.Player.Y+16, 128, color.RGBA{255, 245, 245, 100})
-	
+	DrawLightCircle(g.levelOverlayLayers[3], g.Player.X+16, g.Player.Y+16, 124, color.RGBA{255, 245, 245, 40})
+	DrawLightCircle(g.levelOverlayLayers[3], g.Player.X+16, g.Player.Y+16, 118, color.RGBA{255, 245, 245, 40})
+	DrawLightCircle(g.levelOverlayLayers[3], g.Player.X+16, g.Player.Y+16, 112, color.RGBA{255, 245, 245, 40})
+	DrawLightCircle(g.levelOverlayLayers[3], g.Player.X+16, g.Player.Y+16, 106, color.RGBA{255, 245, 245, 40})
+
 	for i, layer := range g.levelOverlayLayers {
 		if i == 3 {
 			op := &ebiten.DrawImageOptions{}
@@ -189,25 +253,26 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			screen.DrawImage(layer, nil)
 		}
 	}
-	//terrain
-	for x, r := range g.Level {
-		for y, t := range r {
-			if t.IsSalted {
-				ebitenutil.DrawRect(screen, float64(x)*32, float64(y)*32, 32, 32, color.RGBA{0, 255, 0, 100})
-			}
-		}
-	}
-	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(float64(g.Player.X), float64(g.Player.Y))
-	screen.DrawImage(g.Assets.Img["player"], op)
 
+	w, h := g.Assets.Img[fmt.Sprintf("truck/truck_%v", g.Player.Dir)].Size()
+	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Translate(-float64(w)/2, -float64(h)/2)
+	op.GeoM.Rotate(g.Player.Rotation)
+
+	op.GeoM.Scale(2, 2)
+	op.GeoM.Translate(float64(g.Player.X), float64(g.Player.Y))
+
+	screen.DrawImage(g.Assets.Img[fmt.Sprintf("truck/truck_%v", g.Player.Dir)], op)
+
+	g.levelOverlayLayers[2].Clear()
 	for _, ball := range g.Balls {
 		op := &ebiten.DrawImageOptions{}
 		op.GeoM.Scale(0.5, 0.5)
 		op.GeoM.Translate(ball.X, ball.Y)
-
 		g.levelOverlayLayers[2].DrawImage(g.Assets.Img["golfball"], op)
 	}
+
+	screen.DrawImage(g.colOverlay, nil)
 
 	//now, for a magic trick!
 	//scrolling: minimal pain (hopefully) edition!
@@ -246,8 +311,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	op.GeoM.Scale(960/AP_X_SZ*2, 720/AP_Y_SZ*2)
 	screen.Clear()
 	screen.DrawImage(subview, op)
-	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("netX %v netY %v (> %v - %v | ^ %v - %v)", ex-sx, ey-sy, sx, ex, sy, ey), 120, 100)
-	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("FPS: %v (ball count %v) | TPS: %v", int(ebiten.CurrentFPS()), len(g.Balls), int(ebiten.CurrentTPS())), 430, 10)
+
+	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("FPS: %v (ball count %v) | TPS: %v", int(ebiten.CurrentFPS()), len(g.Balls), int(ebiten.CurrentTPS())), 630, 10)
 
 	//== UI ==//
 	mx, my := ebiten.CursorPosition()
@@ -266,7 +331,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	op = &ebiten.DrawImageOptions{}
 	op.GeoM.Scale(radius, radius)
 	op.GeoM.Translate(float64(mx)-8*radius, float64(my)-8*radius)
-	
+
 	if radius < 3.2 {
 		screen.DrawImage(g.Assets.Img["ui/aimmarker_sm2"], op)
 	} else if radius < 8 {
@@ -288,6 +353,35 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	//todo: actual font
 	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Score: %v (%v)", g.Score, float64(g.Score)/float64(g.BestPossibleScore)), 40, 54)
 	screen.DrawImage(g.debugOverlay, nil)
+
+	if DEBUG_ROTVIEW {
+		op = &ebiten.DrawImageOptions{}
+		op.GeoM.Translate(-8, -8)
+		op.GeoM.Rotate(float64(DEBUG_radians))
+		op.GeoM.Scale(10, 10)
+		op.GeoM.Translate(960/4, 720/2)
+
+		screen.DrawImage(g.Assets.Img["tile/rot"], op)
+		op.GeoM.Translate(960/4, -150)
+		screen.DrawImage(g.Assets.Img["truck/truck_u"], op)
+		op.GeoM.Translate(960/4, 0)
+		screen.DrawImage(g.Assets.Img["truck/truck_d"], op)
+		op.GeoM.Translate(-1*960/4, 260)
+		screen.DrawImage(g.Assets.Img["truck/truck_l"], op)
+		op.GeoM.Translate(960/4, 0)
+		screen.DrawImage(g.Assets.Img["truck/truck_r"], op)
+		x := ebiten.NewImage(100, 20)
+		ebitenutil.DebugPrintAt(x, fmt.Sprintf("%v", DEBUG_radians), 0, 0)
+		op = &ebiten.DrawImageOptions{}
+		op.GeoM.Scale(4, 4)
+		op.GeoM.Translate(300, 100)
+		screen.DrawImage(x, op)
+	}
+
+	//gameover is drawn *over* the main game render
+	if g.GameState == 2 {
+		//TODO
+	}
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {

@@ -14,17 +14,24 @@ import (
 var embedFS embed.FS
 
 const (
-	Dbg_LOCALASSETS = false
+	Dbg_LOCAL_ASSETS   = false
+	Dbg_NO_TITLESCREEN = true
 )
 
 func main() {
 	ebiten.SetWindowSize(640, 480)
 	ebiten.SetWindowTitle("SaltRush")
+	s := 0
+	if Dbg_NO_TITLESCREEN {
+		s = 1
+	}
 	g := &game.Game{
 		Player: game.Player{
 			X: 640 / 2, Y: 480 / 2,
+			Dir: "u",
 		},
-		Assets: game.LoadAssets(Dbg_LOCALASSETS, embedFS),
+		Assets:    game.LoadAssets(Dbg_LOCAL_ASSETS, embedFS),
+		GameState: s,
 	}
 	g.Init()
 	if err := ebiten.RunGame(g); err != nil {
